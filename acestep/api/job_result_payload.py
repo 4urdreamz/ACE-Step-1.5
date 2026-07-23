@@ -4,6 +4,15 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional
 
+_LRC_EXTRA_OUTPUT_KEYS = (
+    "pred_latents",
+    "encoder_hidden_states",
+    "encoder_attention_mask",
+    "context_latents",
+    "lyric_token_idss",
+)
+
+
 
 def normalize_metas(meta: dict[str, Any]) -> dict[str, Any]:
     """Normalize LM metadata and ensure expected response keys exist.
@@ -66,6 +75,7 @@ def build_generation_success_response(
     build_generation_info: Callable[..., Any],
     lm_model_name: str,
     dit_model_name: str,
+    lrc_metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build API success payload from final generation outputs."""
 
@@ -99,6 +109,8 @@ def build_generation_success_response(
 
     metas_out["prompt"] = original_prompt
     metas_out["lyrics"] = original_lyrics
+    if lrc_metadata:
+        metas_out.update(lrc_metadata)
 
     seed_value = _extract_seed_value(audios)
     time_costs = result.extra_outputs.get("time_costs", {})
@@ -134,4 +146,61 @@ def build_generation_success_response(
         "dit_model": dit_model_name,
         "cot_caption": getattr(params, "cot_caption", "") or "",
         "cot_lyrics": getattr(params, "cot_lyrics", "") or "",
+    }
+
+
+def build_lrc_metadata(
+    *,
+    result: Any,
+    dit_handler: Any,
+    audio_duration: Any,
+    vocal_language: str,
+    inference_steps: int,
+    sample_idx: int = 0,
+) -> dict[str, str]:
+    """Generate ACE-native LRC metadata from generation intermediates."""
+
+    extra_outputs = getattr(result, "extra_outputs", None) or {}
+    missing = [key for key in _LRC_EXTRA_OUTPUT_KEYS if extra_outputs.get(key) is None]
+    if missing:
+        raise RuntimeError(
+            "ACE LRC generation requires generation intermediates; missing: "
+            + ", ".join(missing)
+        )
+
+    pred_latents = extra_outputs["pred_latents"]
+    encoder_hidden_states = extra_outputs["encoder_hidden_states"]
+    encoder_attention_mask = extra_outputs["encoder_attention_mask"]
+    context_latents = extra_outputs["context_latents"]
+    lyric_token_idss = extra_outputs["lyric_token_idss"]
+
+    if sample_idx < 0 or sample_idx >= pred_latents.shape[0]:
+        raise RuntimeError(f"ACE LRC sample index {sample_idx} is outside generated batch")
+
+    actual_duration = audio_duration
+    if actual_duration is None or float(actual_duration) <= 0:
+        actual_duration = pred_latents.shape[1] / 25.0
+
+    lrc_result = dit_handler.get_lyric_timestamp(
+        pred_latent=pred_latents[sample_idx : sample_idx + 1],
+        encoder_hidden_states=encoder_hidden_states[sample_idx : sample_idx + 1],
+        encoder_attention_mask=encoder_attention_mask[sample_idx : sample_idx + 1],
+        context_latents=context_latents[sample_idx : sample_idx + 1],
+        lyric_token_ids=lyric_token_idss[sample_idx : sample_idx + 1],
+        total_duration_seconds=float(actual_duration),
+        vocal_language=vocal_language or "en",
+        inference_steps=int(inference_steps),
+        seed=42,
+    )
+    if not lrc_result.get("success"):
+        error = lrc_result.get("error") or "unknown timestamping error"
+        raise RuntimeError(f"ACE LRC generation failed: {error}")
+
+    lrc_text = lrc_result.get("lrc_text", "")
+    if not isinstance(lrc_text, str) or not lrc_text.strip():
+        raise RuntimeError("ACE LRC generation returned empty timestamped lyrics")
+
+    return {
+        "lrc": lrc_text,
+        "lrc_source": "ace.get_lyric_timestamp",
     }

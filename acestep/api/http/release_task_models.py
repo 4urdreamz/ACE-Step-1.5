@@ -47,6 +47,10 @@ class GenerateMusicRequest(BaseModel):
     src_audio_path: Optional[str] = None
     audio_duration: Optional[float] = None
     batch_size: Optional[int] = None
+    return_lrc: bool = Field(
+        default=False,
+        description="Generate and return ACE-native LRC timestamped lyrics when generation succeeds.",
+    )
 
     repainting_start: float = 0.0
     repainting_end: Optional[float] = None

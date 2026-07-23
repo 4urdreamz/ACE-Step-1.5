@@ -14,10 +14,10 @@ class _FakeParser:
 
         self._values = values
 
-    def get(self, key: str):
+    def get(self, key: str, default=None):
         """Return raw value for ``key`` from parser payload."""
 
-        return self._values.get(key)
+        return self._values.get(key, default)
 
     def str(self, key: str, default: str = "") -> str:
         """Return string value for ``key`` with default fallback."""
@@ -57,6 +57,7 @@ class ReleaseTaskRequestBuilderTests(unittest.TestCase):
                 "prompt": "hello",
                 "track_classes": "vocals",
                 "use_random_seed": True,
+                "return_lrc": True,
             }
         )
         request = build_generate_music_request(
@@ -71,6 +72,7 @@ class ReleaseTaskRequestBuilderTests(unittest.TestCase):
         self.assertEqual("hello", request.prompt)
         self.assertEqual(["vocals"], request.track_classes)
         self.assertEqual("default-instruction", request.instruction)
+        self.assertTrue(request.return_lrc)
 
     def test_build_request_prefers_explicit_audio_path_overrides(self):
         """Builder should prioritize explicit path overrides over parser fields."""

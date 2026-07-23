@@ -96,6 +96,8 @@ def _build_store_result_payload(
                         "genres": metas.get("genres", ""),
                         "keyscale": metas.get("keyscale", ""),
                         "timesignature": metas.get("timesignature", ""),
+                        "lrc": metas.get("lrc", ""),
+                        "lrc_source": metas.get("lrc_source", ""),
                     },
                 }
                 for path in audio_paths
@@ -113,6 +115,8 @@ def _build_store_result_payload(
                     "genres": metas.get("genres", ""),
                     "keyscale": metas.get("keyscale", ""),
                     "timesignature": metas.get("timesignature", ""),
+                    "lrc": metas.get("lrc", ""),
+                    "lrc_source": metas.get("lrc_source", ""),
                 },
             }]
     else:

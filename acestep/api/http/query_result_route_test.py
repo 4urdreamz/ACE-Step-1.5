@@ -111,7 +111,7 @@ class QueryResultRouteTests(unittest.TestCase):
             created_at=123.0,
             result={
                 "audio_paths": ["a.mp3"],
-                "metas": {"caption": "c", "lyrics": "l", "bpm": 120},
+                "metas": {"caption": "c", "lyrics": "l", "bpm": 120, "lrc": "[00:01.00]l", "lrc_source": "test"},
             },
             progress_text="done",
             progress=1.0,
@@ -134,6 +134,8 @@ class QueryResultRouteTests(unittest.TestCase):
         serialized = json.loads(payload["result"])
         self.assertEqual("a.mp3", serialized[0]["file"])
         self.assertEqual("c", serialized[0]["prompt"])
+        self.assertEqual("[00:01.00]l", serialized[0]["metas"]["lrc"])
+        self.assertEqual("test", serialized[0]["metas"]["lrc_source"])
 
     def test_query_result_returns_empty_when_task_missing(self):
         """Route should preserve legacy missing-task response contract."""

@@ -123,6 +123,8 @@ class LocalCacheUpdatesTests(unittest.TestCase):
                 "timesignature": "4/4",
                 "prompt": "original prompt",
                 "lyrics": "original lyrics",
+                "lrc": "[00:01.00]original lyrics",
+                "lrc_source": "test",
             },
             "generation_info": "info",
             "seed_value": "42",
@@ -146,6 +148,8 @@ class LocalCacheUpdatesTests(unittest.TestCase):
         self.assertEqual("a.mp3", payload[0]["file"])
         self.assertEqual("final prompt", payload[0]["prompt"])
         self.assertEqual("original prompt", payload[0]["metas"]["prompt"])
+        self.assertEqual("[00:01.00]original lyrics", payload[0]["metas"]["lrc"])
+        self.assertEqual("test", payload[0]["metas"]["lrc_source"])
         self.assertEqual(1.0, payload[0]["progress"])
         self.assertEqual("succeeded", payload[0]["stage"])
 

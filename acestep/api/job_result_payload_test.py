@@ -8,8 +8,31 @@ from unittest.mock import MagicMock
 
 from acestep.api.job_result_payload import (
     build_generation_success_response,
+    build_lrc_metadata,
     normalize_metas,
 )
+
+
+class _FakeTensor:
+    """Minimal tensor-like object for slicing and shape checks."""
+
+    shape = (1, 100, 4)
+
+    def __getitem__(self, item):
+        """Return self for batch slicing."""
+
+        return self
+
+
+class _FakeTimestampHandler:
+    """Capture LRC timestamping calls."""
+
+    def __init__(self) -> None:
+        self.kwargs = None
+
+    def get_lyric_timestamp(self, **kwargs):
+        self.kwargs = kwargs
+        return {"success": True, "lrc_text": "[00:01.00]Line one"}
 
 
 class JobResultPayloadTests(unittest.TestCase):
@@ -80,6 +103,73 @@ class JobResultPayloadTests(unittest.TestCase):
         self.assertEqual("lm", payload["lm_model"])
         self.assertEqual("dit", payload["dit_model"])
         build_generation_info.assert_called_once()
+
+    def test_build_generation_success_response_preserves_lrc_metadata(self) -> None:
+        """LRC metadata should be carried inside the API metas payload."""
+
+        result = SimpleNamespace(
+            audios=[{"path": "a.wav", "params": {}}],
+            extra_outputs={"lm_metadata": {}, "time_costs": {}},
+            status_message="ok",
+        )
+        params = SimpleNamespace(
+            caption="c",
+            lyrics="l",
+            cot_bpm=None,
+            cot_duration=None,
+            cot_keyscale=None,
+            cot_timesignature=None,
+        )
+
+        payload = build_generation_success_response(
+            result=result,
+            params=params,
+            bpm=None,
+            audio_duration=10,
+            key_scale=None,
+            time_signature=None,
+            original_prompt="orig prompt",
+            original_lyrics="orig lyrics",
+            inference_steps=8,
+            path_to_audio_url=lambda path: str(path),
+            build_generation_info=MagicMock(return_value="gen-info"),
+            lm_model_name="lm",
+            dit_model_name="dit",
+            lrc_metadata={"lrc": "[00:01.00]Line one", "lrc_source": "test"},
+        )
+
+        self.assertEqual("[00:01.00]Line one", payload["metas"]["lrc"])
+        self.assertEqual("test", payload["metas"]["lrc_source"])
+
+    def test_build_lrc_metadata_calls_ace_timestamping(self) -> None:
+        """LRC helper should pass generation intermediates to ACE timestamping."""
+
+        tensor = _FakeTensor()
+        result = SimpleNamespace(
+            extra_outputs={
+                key: tensor
+                for key in (
+                    "pred_latents",
+                    "encoder_hidden_states",
+                    "encoder_attention_mask",
+                    "context_latents",
+                    "lyric_token_idss",
+                )
+            },
+        )
+        handler = _FakeTimestampHandler()
+
+        metadata = build_lrc_metadata(
+            result=result,
+            dit_handler=handler,
+            audio_duration=None,
+            vocal_language="",
+            inference_steps=8,
+        )
+
+        self.assertEqual("[00:01.00]Line one", metadata["lrc"])
+        self.assertEqual("ace.get_lyric_timestamp", metadata["lrc_source"])
+        self.assertEqual(4.0, handler.kwargs["total_duration_seconds"])
 
 
 if __name__ == "__main__":

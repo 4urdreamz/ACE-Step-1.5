@@ -89,14 +89,15 @@ class JobLlmPreparationTests(unittest.TestCase):
             _llm_lazy_load_disabled=False,
         )
         llm = MagicMock()
+        create_sample_fn = MagicMock(return_value=sample_result)
 
         prepared = prepare_llm_generation_inputs(
             app_state=app_state,
             llm_handler=llm,
             req=req,
             selected_handler_device="cuda",
-            parse_description_hints=MagicMock(return_value=("en", False)),
-            create_sample_fn=MagicMock(return_value=sample_result),
+            parse_description_hints=MagicMock(return_value=("fr", False)),
+            create_sample_fn=create_sample_fn,
             format_sample_fn=MagicMock(),
             ensure_llm_ready_fn=MagicMock(),
             log_fn=MagicMock(),
@@ -108,6 +109,8 @@ class JobLlmPreparationTests(unittest.TestCase):
         self.assertEqual("C major", prepared.key_scale)
         self.assertEqual("4/4", prepared.time_signature)
         self.assertEqual(12.0, prepared.audio_duration)
+        create_sample_fn.assert_called_once()
+        self.assertEqual("en", create_sample_fn.call_args.kwargs["vocal_language"])
 
     def test_prepare_llm_generation_inputs_disables_optional_cot_when_llm_unavailable(self) -> None:
         """Optional CoT flags should auto-disable when LLM is unavailable but not required."""

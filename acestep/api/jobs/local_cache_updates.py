@@ -69,6 +69,8 @@ def update_local_cache(
                 "timesignature": metas_raw.get("timesignature", ""),
                 "prompt": metas_raw.get("prompt", ""),
                 "lyrics": metas_raw.get("lyrics", ""),
+                "lrc": metas_raw.get("lrc", ""),
+                "lrc_source": metas_raw.get("lrc_source", ""),
             }
             generation_info = result.get("generation_info", "")
             seed_value = result.get("seed_value", "")

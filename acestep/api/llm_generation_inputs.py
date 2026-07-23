@@ -119,7 +119,7 @@ def prepare_llm_generation_inputs(
         sample_query = req.sample_query if has_sample_query else "NO USER INPUT"
         parsed_language, parsed_instrumental = parse_description_hints(sample_query)
 
-        if req.vocal_language and req.vocal_language not in ("en", "unknown", ""):
+        if req.vocal_language and req.vocal_language not in ("unknown", ""):
             sample_language = req.vocal_language
         else:
             sample_language = parsed_language

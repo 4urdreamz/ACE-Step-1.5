@@ -58,6 +58,7 @@ def build_generate_music_request(
         use_random_seed=parser.bool("use_random_seed", True),
         seed=parser.get("seed", -1),
         batch_size=parser.int("batch_size"),
+        return_lrc=parser.bool("return_lrc") or parser.bool("auto_lrc"),
         repainting_start=parser.float("repainting_start", 0.0),
         repainting_end=parser.float("repainting_end"),
         instruction=parser.str("instruction", default_dit_instruction),
