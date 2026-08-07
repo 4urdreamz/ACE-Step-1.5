@@ -60,6 +60,11 @@ def do_model_initialization(
 
     offload_dit_to_cpu = env_bool("ACESTEP_OFFLOAD_DIT_TO_CPU", False)
     compile_model = env_bool("ACESTEP_COMPILE_MODEL", False)
+    quantization_env = os.getenv("ACESTEP_QUANTIZATION")
+    if quantization_env is not None:
+        quantization = quantization_env.strip() or None
+    else:
+        quantization = "int8_weight_only" if gpu_config.quantization_default else None
 
     checkpoint_dir = os.path.join(project_root, "checkpoints")
     os.makedirs(checkpoint_dir, exist_ok=True)
@@ -85,6 +90,7 @@ def do_model_initialization(
         compile_model=compile_model,
         offload_to_cpu=offload_to_cpu,
         offload_dit_to_cpu=offload_dit_to_cpu,
+        quantization=quantization,
     )
     if not ok:
         app.state._init_error = status_msg
@@ -110,6 +116,7 @@ def do_model_initialization(
                 compile_model=compile_model,
                 offload_to_cpu=offload_to_cpu,
                 offload_dit_to_cpu=offload_dit_to_cpu,
+                quantization=quantization,
             )
             app.state._initialized2 = ok2
             if ok2:
@@ -137,6 +144,7 @@ def do_model_initialization(
                 compile_model=compile_model,
                 offload_to_cpu=offload_to_cpu,
                 offload_dit_to_cpu=offload_dit_to_cpu,
+                quantization=quantization,
             )
             app.state._initialized3 = ok3
             if ok3:
@@ -227,3 +235,4 @@ def initialize_models_at_startup(
         app=app,
         **app.state._model_init_kwargs,
     )
+

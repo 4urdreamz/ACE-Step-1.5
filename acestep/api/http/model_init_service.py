@@ -104,6 +104,11 @@ def initialize_models_for_request(
     use_flash_attention = env_bool("ACESTEP_USE_FLASH_ATTENTION", True)
     offload_dit_to_cpu = env_bool("ACESTEP_OFFLOAD_DIT_TO_CPU", False)
     compile_model = env_bool("ACESTEP_COMPILE_MODEL", False)
+    quantization_env = os.getenv("ACESTEP_QUANTIZATION")
+    if quantization_env is not None:
+        quantization = quantization_env.strip() or None
+    else:
+        quantization = "int8_weight_only" if gpu_config.quantization_default else None
     device = os.getenv("ACESTEP_DEVICE", "auto")
 
     ensure_model_downloaded(target_model, checkpoint_dir)
@@ -117,6 +122,7 @@ def initialize_models_for_request(
         compile_model=compile_model,
         offload_to_cpu=offload_to_cpu,
         offload_dit_to_cpu=offload_dit_to_cpu,
+        quantization=quantization,
     )
     if not ok:
         setattr(app_state, error_attr, status_msg)
@@ -163,3 +169,4 @@ def initialize_models_for_request(
         loaded_lm_model = lm_model_name or lm_model_path
 
     return {"slot": resolved_slot, "loaded_model": target_model, "loaded_lm_model": loaded_lm_model}
+
