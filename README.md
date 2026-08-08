@@ -21,6 +21,14 @@
 
 ## 📰 News
 
+## Portable API lifecycle
+
+After `uv sync`, use `uv run acestep-service start|status|stop` for automation on
+Windows or macOS. It launches through the active environment's absolute Python path,
+records process ownership under `.runtime`, refuses to stop unowned listeners, and
+selects the MLX language-model backend automatically on Apple Silicon. Existing
+platform launchers remain available for interactive and specialized hardware flows.
+
 > 🎵 **Want a faster & more stable experience? Try [acemusic.ai](https://acemusic.ai) — 100% free!**
 
 - **[2026-04-02] 🎉 ACE-Step 1.5 XL (4B DiT) Released!** — We introduce the XL series with a 4B-parameter DiT decoder for higher audio quality. Three variants available: [xl-base](https://huggingface.co/ACE-Step/acestep-v15-xl-base), [xl-sft](https://huggingface.co/ACE-Step/acestep-v15-xl-sft), [xl-turbo](https://huggingface.co/ACE-Step/acestep-v15-xl-turbo). Requires ≥12GB VRAM (with offload), ≥20GB recommended. All LM models fully compatible. See [Model Zoo](#-model-zoo) for details.

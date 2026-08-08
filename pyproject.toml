@@ -98,6 +98,7 @@ acestep = "acestep.acestep_v15_pipeline:main"
 acestep-api = "acestep.api_server:main"
 acestep-download = "acestep.model_downloader:main"
 acestep-openrouter = "openrouter.openrouter_api_server:main"
+acestep-service = "acestep.service:main"
 
 [build-system]
 requires = ["hatchling"]

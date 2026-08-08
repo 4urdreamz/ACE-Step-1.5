@@ -1,0 +1,17 @@
+name: Portable service CI
+
+on: [push, pull_request]
+
+jobs:
+  service:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest acestep.service_test
+      - run: python -m py_compile acestep/service.py acestep/service_test.py
